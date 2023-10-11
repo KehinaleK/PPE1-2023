@@ -11,5 +11,5 @@ J’ai ensuite pu mettre à jour le répértoire github en utilisant les command
 
 J’écris ici pour tester les commandes d’annulation de commit lalalalalala j’écris lalalalala j’écris.
 
-# séance 3 test
+# séance 3
  
