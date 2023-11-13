@@ -117,4 +117,146 @@ fi
 
 Le même problème se pose. Je suis obligée de  déclarer une variable $3 (également le cas quand je place la condition au dessus ou bien la commande cat dans la condition).
 
+- Séance du 08/11/2023
+
+Lors de cette séance, nous sommes revenus sur le devoir demandé pendant la semaine qui consistait à écrire un script permettant d'extraire les url d'un fichier et leur attribuer leurs encodages et codes HTTP. J'avais eu beaucoup de mal à faire cet exercice pendant les vacances et ai donc décidé de le faire cette semaine après la correction en classe. J'ai essayé de regarder le moins possible la correction et j'en suis venue au script suivant :
+
+    #!/usr/bin/env bash
+
+nomdefichier=$1
+noline=1
+
+if [ "$#" -ne 1 ];
+    then echo "Il faut donner un nom de fichier"
+    exit 1
+fi
+
+while read -r line;
+do
+    httpcode=$(curl -I -s -L -w "%{http_code}" -o /dev/null "$line")
+    encoding=$(curl -I -s -L -w "%{content_type}" -o /dev/null "$line")
+    echo -e "$noline\t$line\t$httpcode\t$encoding";
+    ((noline++))
+
+done < "$nomdefichier"
+
+
+Je pense que ce qui m'a le plus compliqué la tâche est les deux lignes :
+    httpcode=$(curl -I -s -L -w "%{http_code}" -o /dev/null "$line")
+    encoding=$(curl -I -s -L -w "%{content_type}" -o /dev/null "$line")
+
+Je comprends l'utilisation de curl et l'impact qu'elles ont sur le script, cependant, j'ai du m'aider de la correction. Je ne pense pas que j'aurais pu être capable d'arriver à ce résultat par moi-même.
+
+Avant de commencer à essayer de faire les exercices supplémentaires, j'ai voulu transformer l'output obtenu grâce à ce script en page html comme cela était demandé dans les diaporamas du cours.
+
+Je me suis basé sur le cours ainsi que sur plusieurs tutoriels pour parvenir à écrire mon script. J'en suis donc arrivé au script suivant à partir de celui du mini projet que j'avais rédigé :
+
+
+#!/usr/bin/env bash
+
+nomdefichier=$1
+noline=1
+
+#Cette condition demande à l'utilisateur de donner au moins un argument pour que le programme s'execute.
+# -ne = not equal to.
+
+if [ "$#" -ne 1 ];
+    then echo "Il faut donner un nom de fichier"
+    exit 1
+#exit 1 permet de stopper le programme si la condition n'est pas remplie. Si on ne la met pas, on obtient un message d'erreur.
+fi
+
+exec > "tableauhtml"
+#Notre output sera stocké dans un fichier du nom de tableauhtml.
+
+echo "<html>" #Marque le début du document html.
+echo "<head><title>Mini projet</title></head>"
+#title = ce qui est écrit dans l'onglet.
+#head = les métadonnées de la page.
+echo "<body>"
+#marque le début du corps de la page html.
+echo "<table border='1'>"
+#donne la taille de la bordure du tableau. border='1' 1 pixel par exemple.
+echo "<tr><th>Numéro de ligne</th><th>URL</th><th>Code HTTP</th><th>Encodage de la page</th></tr>"
+#imprime la ligne qui contient les titres des colonnes. des th pour chaque colonne.
+
+while read -r line;
+do
+    httpcode=$(curl -I -s -L -w "%{http_code}" -o /dev/null "$line")
+    encoding=$(curl -I -s -L -w "%{content_type}" -o /dev/null "$line")
+
+    echo -e "<tr>
+                <td>$noline</td>
+                <td style='color: blue;'><a href='$line'>$line</a></td>
+                <td>$httpcode</td>
+                <td>$encoding</td>
+            </tr>"
+#J'ajoute style='color: blue;' pour donner une couleur à ma variable $line. Tous mes URL seront en bleu.
+#J'ajoute la balise <a>, cette dernière donne à l'utilisateur la possibilité de cliquer sur les URL pour accéder à une page web.
+
+
+    #echo -e "<tr><td>$noline</td><td>$line</td><td>$httpcode</td><td>$encoding</td></tr>" Version une ligne et non colorée du echo du haut.
+    #echo -e "$noline\t$line\t$httpcode\t$encoding"; Cette ligne ajoute une ligne de texte non formaté au fichier html.
+    ((noline++))
+
+done < "$nomdefichier"
+
+echo "</table>"
+echo "</body>"
+echo "</html>"
+#ferment les balises précedemment ouvertes.
+
+
+#Quand je relance le script, les lignes sont ajoutées en doublon. J'ai par exemple executé le script une première fois puis une deuxième fois après l'ajout des couleurs. Les lignes colorées était donc ajoutées en double de celles en noir.
+
+
+
+
+Après avoir réussi à créer un dossier en html qui représente nos données en tableau, je me suis rensignée pour faire quelques modifications. Je suis par exemple allée voir comment ajouter des couleurs aux données de mon tableau. J'ai utilisé style=color pour cela. J'ai du en conséquence supprimer la ligne echo -e "<tr><td>$noline</td><td>$line</td><td>$httpcode</td><td>$encoding</td></tr>". Sa présence créeait des doublons.
+
+J'ai également voulu faire en sorte que les URLS puissent être sous forme de lien nous permettant d'accéder aux pages web auxquelles ils renvoyaient. Pour cela, j'ai vu que la balise <a> était utilisée. J'ai cependant eu du mal au niveau de la syntaxe et aies du faire corriger mon programme pour ce qui est de cette section.
+J'ai décidé d'ajouter des commentaires au script afin de de savoir exactement à quoi correspond chaque ligne.
+
+
+
+Exercices supplémentaires mini-projet :
+
+    Exercice 1 :
+
+Pour l'exercice 1, j'ai décidé d'utiliser "tr" afin de récupérer un mot par ligne. J'ai également essayé avec "sed" mais j'ai eu énormement de mal à comprendre la syntaxe. J'ai commencé par voir si ma commande fonctionnait dans le terminal :
+        egrep "[A-Z]?[a-z]" candide.txt | tr -s '[:space:]' '\n'
+Cette dernière semblait en effet fonctionner.
+
+Il fallait ensuite nettoyer le texte, pour cela, j'ai ajouté deux autre "tr"
+        egrep "[A-Z]?[a-z]" candide.txt | tr -s '[:space:]' '\n' | tr -s '[:upper:]' '[:lower:]' | tr -c '[:alnum:]'
+
+Le "tr -s" permet de remplacer l'ensemble des caractères uppercase par des lowercase. Le "tr -c" exclue tout ce qui n'est pas dans '[:alnum:]'.
+Je pense que j'aurai pu simplement faire "egrep "[a-z]+"" au lieu d'utiliser le deuxième "tr".
+
+Pour le script qu'il fallait rédiger, j'en suis venu au suivant :
+
+
+nomdefichier=$1
+
+if [ ! -f "$nomdefichier" ] || [ "${nomdefichier##.}" != "txt" ];
+    then echo "Vous devez choisir un fichier texte existant"
+    exit 1
+fi
+
+grep "[A-Z]?[a-z]" $nomdefichier| tr -s '[:space:]' '\n' | tr -s '[:upper:]' '[:lower:]' | tr -c '[:alnum:]'
+
+Ce script me renvoie toujours qu'il faut que je rentre un nom de fichier existant. Je pense qu'il y a une erreur au niveau de ma déclaration de variable, peu importe ce que je rentre, il ne reconnait pas que candide.txt est un fichier existant dans mon répertoire. Pourtant, candide.txt et mon script sont bien dans le même répertoire.
+
+    Exercice 2 :
+
+
+
+
+
+
+
+
+
+
+
 
